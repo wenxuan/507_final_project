@@ -30,7 +30,7 @@ class SteamDiscountItem:
     release date: string
         the name of a national site (e.g. 'Isle Royale')
     '''
-    def __init__(self, title, tag, positive_rate, discount_rate,  original_price, discount_price, release_date):
+    def __init__(self, title, tag, positive_rate, discount_rate,  original_price, discount_price, release_date, link):
         self.title = title
         self.tag = tag
         self.positive_rate = positive_rate
@@ -38,6 +38,7 @@ class SteamDiscountItem:
         self.original_price = original_price
         self.discount_price = discount_price
         self.release_date = release_date
+        self.link = link
 
     def info(self):
 
@@ -47,175 +48,177 @@ class SteamDiscountItem:
                                              self.original_price,
                                              self.discount_price,
                                              self.release_date)
+    def store(self):
+         return [self.title, self.tag,
+                self.positive_rate,
+                self.discount_rate,
+                self.original_price,
+                self.discount_price,
+                self.release_date,
+                self.link]
 
-# chrome_options = Options()
-# chrome_options.add_argument('--no-sandbox')
-# chrome_options.add_argument('--disable-dev-shm-usage')
-
-# driver = webdriver.Chrome(options=chrome_options)
-# driver.get("https://store.steampowered.com/search/?specials=1&tags=492")
-# soup = []
-
-
-def InfiniteScroll():
+# start extracting website raw data with cache or feching
+def InfiniteScroll(n=1):
 
     driver = webdriver.Chrome(executable_path=r"C:\Users\19738\Downloads\chromedriver_win32\chromedriver.exe")
     driver.get("https://store.steampowered.com/search/?specials=1&tags=492")
 
-    for i in range(40):
+    for i in range(n):
         try:
             # Action scroll down
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             break
         except:
             time.sleep(1)
-    # result = driver.page_source
-    # driver.close()
-    # soup = BeautifulSoup(result, "html.parser")
-    # result = json.loads(soup.text)
-    # return result
+
     result = driver.page_source
     driver.close()
     return result
 
+def readCache(fn):
 
-def readCache():
-
-    with open('steamspecial.html', 'r') as r:
+    with open(fn, 'r', encoding="utf-8") as r:
         data = r.read()
-        return data
+    return data
 
-def writeCache(data):
-    with open('steamspecial.html', "w", encoding="utf-8") as f:
+def writeCache(data,fn):
+    with open(fn, "w", encoding="utf-8") as f:
         f.write(data)
     f.close()
+    return
 
-def CachePage():
-    path = '/Users/19738/OneDrive/Desktop/SI507/assignment/final project/steamspecial.html'
+def CachePage(fn,numScroll):
+    path = '/Users/19738/OneDrive/Desktop/SI507/assignment/final project/'+str(fn)
     if os.path.exists(path):
-        return 2#readCache()
+        return readCache(fn)
     else:
-        data = InfiniteScroll()
-        print(type(data))
-        writeCache(data)
+        data = InfiniteScroll(numScroll)
+        writeCache(data,fn)
         return data
 
+# caching sales items helper functions
+def writeItem(fn,data,total):
+    '''
+    [
+        ["","","",...],     # every list contains title,tag,rates,etc... as strings seperatly
+        ["","","",...],
+        ...
+    ]
+    '''
+    
+    res = [total]
+    for item in data:
+        res.append(item.store())
+    with open (fn, 'w') as f:
+        json.dump(res,f)
+    f.close()
+    return
+
+def readItem(fn):
+    path = '/Users/19738/OneDrive/Desktop/SI507/assignment/final project/'+str(fn)
+    if os.path.exists(path):
+        with open(fn,"r") as f:
+            data = json.load(f)
+            f.close()
+            return data[0],data[1:]
+    else: return -1
+
+# start extracting individual items/sales from a website
 def ext_info(item,info_class):
     return item.find(class_=info_class)
 
-def Scrap(html):
+def Scrap(html,tag=None):
+    '''
+        param:
 
+        return: list of SteamDiscountItem objects
+            [
+                SteamDiscountItem,
+                SteamDiscountItem,
+                ...
+            ]
+    
+    ''' 
+    # check if cache already there
+    ca = readItem(tag+".json")
+    if ca != -1:
+        AllsalesItem = []
+        for item in ca[1]:
+            salesItem = SteamDiscountItem(item[0], item[1], item[2], item[3], item[4], item[5], item[6], item[7])
+            AllsalesItem.append(salesItem)
+        return AllsalesItem, ca[0]
+    
+    # start scraping
     soup = BeautifulSoup(html, "html.parser")
     rows = soup.find(id='search_resultsRows')
     items = rows.find_all("a")
-    #print(items[0:2])
+    i=0
+    AllsalesItem = []
 
     for item in items:
         # title
         try:
             title = str(ext_info(item,"title"))
             t = title[20:-7].strip()
-            print(t)
+            
         except:
             continue
 
         # positive_rate
-        pos_text = str(ext_info(item, 'search_review_summary positive'))
-        ind = pos_text.find(";")
-        p = pos_text[ind+7:ind+10].strip()
-        if p:print(p)
-        else: print(None)
+        p = str(ext_info(item, 'search_review_summary positive'))
+        ind = p.find(";")
+        positive_rate = p[ind+7:ind+10].strip()
+        if positive_rate: 
+            if not positive_rate.endswith('%'):
+                positive_rate += '%'
+        else: positive_rate = None
+        
 
         # discount rate
         discount_rate = str(ext_info(item, 'col search_discount responsive_secondrow'))
         d = discount_rate[-17:-14].strip('-')
-        print(d)
 
         # original price
         original_price = str(ext_info(item, 'col search_price discounted responsive_secondrow'))
         ind1 = original_price.find("<strike>")
         ind2 = original_price.find("</strike>")
         op = original_price[ind1+8:ind2].strip()
-        print(op)
 
         # discount price
         discount_price = str(ext_info(item, 'col search_price discounted responsive_secondrow'))
         ind3 = discount_price.find("<br/>")
         ind4 = discount_price.find("</div>")
         dp = discount_price[ind3+5:ind4].strip()
-        print(dp)
 
         # release date
         release_date = str(ext_info(item, 'col search_released responsive_secondrow'))
         rd = release_date[54:-6].strip()
-        if rd:print(rd)
-        else: print(None)
+        if rd: pass
+        else: rd = None
 
-        print("------------------------------------------------")
+        # link retrieve
+        link = str(item.get("href"))
+        #print(link)
 
+        #print("------------------------------------------------")
+        i+=1
+
+    
+        salesItem = SteamDiscountItem(t, tag, positive_rate, d, op, dp, rd, link)
+        AllsalesItem.append(salesItem)
+    # caching
+    writeItem("Indie.json",AllsalesItem,i)
+    return AllsalesItem,i
 
         
-
-
-        
-
-    """
-    title = soup.find_all(class_='title')
-    positive_rate = soup.find_all(class_='search_review_summary positive')
-    discount_rate = soup.find_all(class_='col search_discount responsive_secondrow')
-    original_price = soup.find_all(class_='col search_price discounted responsive_secondrow')
-    release_date = soup.find_all(class_='col search_released responsive_secondrow')
-    # repeat n times
-    filter_number = soup.find_all(class_='search_results_filtered_warning')
-    fil = str(filter_number[0])
-    ind5 = fil.find("<div>")
-    ind6 = fil.find("results match your search")
-    n = int(fil[ind5+5:ind6].strip().replace(',',''))
-    # end of n
-
-    print(n)
-    print(len(soup))
-    print(len(rows))
-    print(len(title))
-    print(len(positive_rate))
-    print(len(discount_rate))
-    print(len(original_price))
-    print(len(release_date))
-    """
-
 def main():
-    html = InfiniteScroll()
-    Scrap(html)
+    #html = InfiniteScroll()
+    data = CachePage("steamspecial.html",60)
+    tag = 'Indie'
+    res,total = Scrap(data,tag)
+    for item in res:
+        print(item.info())
+    #Scrap(html)
 
 if __name__== "__main__":
    main()
-
-# itemList = []
-# for i in range(n):
-#     # title
-#     title_v1 = str(title[n])
-#     t = title_v1[20:-7]
-#     # tag already exist
-#     # positive_rate
-#     #soup.find(class_='dropdown-menu')
-#     pos_text = str(positive_rate[n])
-#     ind = pos_text.find(";")
-#     p = pos_text[ind+7:ind+10].strip()
-#     # discount
-#     d = discount_rate[n][-17:-14].strip('-')
-#     #original price
-#     price = str(original_price[n])
-#     ind1 = price.find("<strike>")
-#     ind2 = price.find("</strike>")
-#     op = price[ind1+8:ind2]
-#     # discount price
-#     ind3 = price.find("<br/>")
-#     ind4 = price.find("</div>")
-#     dp = price[ind3+5:ind4]
-#     # release date
-#     dat = str(release_date[n])
-#     rd = dat[53:-6]
-
-#     it = SteamDiscountItem(t,"tag",p,d,op,dp,rd)
-#     print(it.info())
-#     print()
