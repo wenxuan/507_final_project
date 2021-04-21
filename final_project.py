@@ -58,7 +58,7 @@ class SteamDiscountItem:
                 self.link]
 
 # start extracting website raw data with cache or feching
-def InfiniteScroll(n=1):
+def InfiniteScroll(n=1,tag=None):
 
     driver = webdriver.Chrome(executable_path=r"C:\Users\19738\Downloads\chromedriver_win32\chromedriver.exe")
     driver.get("https://store.steampowered.com/search/?specials=1&tags=492")
@@ -219,6 +219,37 @@ def main():
     for item in res:
         print(item.info())
     #Scrap(html)
+    while 1:
+        # logic, user interactive part
+        comm = input("Please enter [indie, action, adventure, casual] or [quit] to quit: ")
+        if comm.strip() == "quit":
+            #user enter quit command
+            return
+        else:   
+            # check comm validation / extracting data
+            if comm.strip().lower()   == "indie":
+                data = CachePage("indie.html",60)
+                res,total = Scrap(data,"indie")
+
+            elif comm.strip().lower() == "action":
+                pass
+            elif comm.strip().lower() == "adventure":
+                pass
+            elif comm.strip().lower() == "casual":
+                pass
+            else:
+                print("Invalid input.")
+                continue
+            while 1:
+                break
+                # view url / plot data
+                comm2 = input("Do you want to [view] sales items or [plot] data: ")
+                if comm2.strip().lower() == "":
+                    pass
+                elif comm2.strip().lower() == "":
+                    pass
+                else:
+                    continue
 
 if __name__== "__main__":
    main()
