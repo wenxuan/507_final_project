@@ -6,6 +6,8 @@ from urllib.parse import urljoin
 import json
 import os.path
 from os import path
+import plotly
+import plotly.express as px
 #C:\Program Files (x86)\Google\Chrome\Application\chrome.exe
 GLOBAL_URL = {
   "indie":"https://store.steampowered.com/search/?specials=1&tags=492",
@@ -265,8 +267,29 @@ def viewURL(data,total,tag):
     printSalesItemsWithLimitAndControlUnit(data,total,tag,limit)
 
 
+def barPlot():
+    pass
 
-        
+def scatterPlot(res,total):
+
+    tup = []
+    for item in res:
+        if item.discount_price and item.discount_rate:
+            if item.discount_price.strip("$") == "Free":
+                dis_price = "0"
+            else: dis_price = item.discount_price
+            tup.append([int(float(dis_price.strip("$"))),
+                        int(item.discount_rate.strip("%"))]
+                      )
+        continue
+
+    tup.sort()
+
+    x,y = ["$"+str(i[0]) for i in tup], [str(i[1])+"%" for i in tup]
+    fig = px.scatter(x, y)
+    fig.show()
+
+
 def main():
     # start doing logic with user prompt
     while 1:
@@ -305,11 +328,22 @@ def main():
                 if comm2.strip().lower() == "exit": return
                 # valid command
                 if comm2.strip().lower() == "plot":
-                    pass
+                    comm3 = input("Do you want a [bar] plot or a [scatter] plot? Or you can [back] to back to last step, or [exit] to exit the program:")
+                    if comm3.strip().lower() == "bar":
+                        barPlot()
+                    elif comm3.strip().lower() == "scatter":
+                        scatterPlot(res,total)
+                    elif comm3.strip().lower() == "back": break
+                    elif comm3.strip().lower() == "exit": return
+                    else:
+                        print("Invalid input.")
+                        continue
+                    
                 elif comm2.strip().lower() == "view":
                     viewURL(res,total,tag)
                     continue
                 else:
+                    print("Invalid input.")
                     continue
 
 if __name__== "__main__":
