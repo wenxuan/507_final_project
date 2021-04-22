@@ -7,9 +7,14 @@ import json
 import os.path
 from os import path
 #C:\Program Files (x86)\Google\Chrome\Application\chrome.exe
+GLOBAL_URL = {
+  "indie":"https://store.steampowered.com/search/?specials=1&tags=492",
+  "action":"https://store.steampowered.com/search/?specials=1&tags=19",
+  "adventure":"https://store.steampowered.com/search/?specials=1&tags=21",
+  "casual":"https://store.steampowered.com/search/?specials=1&tags=597"}
 
 class SteamDiscountItem:
-    '''a national site
+    '''Steam special sales site
 
     Instance Attributes
     -------------------
@@ -17,6 +22,7 @@ class SteamDiscountItem:
         the title of steam game (e.g. 'National Park', '')
   
     tag: string
+        the tag of steam game
     
     positive rate: string
         the city and state of a national site (e.g. 'Houghton, MI')
@@ -58,10 +64,10 @@ class SteamDiscountItem:
                 self.link]
 
 # start extracting website raw data with cache or feching
-def InfiniteScroll(n=1,tag=None):
+def InfiniteScroll(n=1,tag="indie"):
 
     driver = webdriver.Chrome(executable_path=r"C:\Users\19738\Downloads\chromedriver_win32\chromedriver.exe")
-    driver.get("https://store.steampowered.com/search/?specials=1&tags=492")
+    driver.get(GLOBAL_URL[tag.lower()])
 
     for i in range(n):
         try:
@@ -92,7 +98,7 @@ def CachePage(fn,numScroll):
     if os.path.exists(path):
         return readCache(fn)
     else:
-        data = InfiniteScroll(numScroll)
+        data = InfiniteScroll(numScroll,fn[:-5])
         writeCache(data,fn)
         return data
 
@@ -108,6 +114,7 @@ def writeItem(fn,data,total):
     
     res = [total]
     for item in data:
+      #[item.title,item.tag,item.positive_rate,item.discount_rate,item.original_price,item.discount_price,item.release_date,item.link]
         res.append(item.store())
     with open (fn, 'w') as f:
         json.dump(res,f)
@@ -127,7 +134,7 @@ def readItem(fn):
 def ext_info(item,info_class):
     return item.find(class_=info_class)
 
-def Scrap(html,tag=None):
+def Scrap(html,tag='indie'):
     '''
         param:
 
@@ -171,7 +178,7 @@ def Scrap(html,tag=None):
         if positive_rate: 
             if not positive_rate.endswith('%'):
                 positive_rate += '%'
-        else: positive_rate = None
+        else: positive_rate = ""
         
 
         # discount rate
@@ -194,7 +201,7 @@ def Scrap(html,tag=None):
         release_date = str(ext_info(item, 'col search_released responsive_secondrow'))
         rd = release_date[54:-6].strip()
         if rd: pass
-        else: rd = None
+        else: rd = ""
 
         # link retrieve
         link = str(item.get("href"))
@@ -207,47 +214,101 @@ def Scrap(html,tag=None):
         salesItem = SteamDiscountItem(t, tag, positive_rate, d, op, dp, rd, link)
         AllsalesItem.append(salesItem)
     # caching
-    writeItem("Indie.json",AllsalesItem,i)
+    writeItem(str(tag)+".json",AllsalesItem,i)
     return AllsalesItem,i
+
+def printSalesItems(data,total,tag,limit=50,startwith=0):
+    # header
+    print("--------------------------------------------------------")
+    print("#{} has {} number of sales items in the list#".format(str(tag).capitalize(),total))
+    print("--------------------------------------------------------")
+    print("{:6} {:40} {:6} {:13} {:13} {:13} {:13} {:13}". format("","title","tag","positive_rate","discount_rate","original_price", "discount_price", "release_date"))
+
+    for i in range(startwith,startwith+limit):
+        if i >= len(data): return 0
+        item = data[i]
+        print("[{:4}] {:.40s} {:6} {:13} {:13} {:13} {:13} {:13}".format(i,item.title.ljust(40),item.tag,
+        item.positive_rate,
+        item.discount_rate,
+        item.original_price,
+        item.discount_price,
+        item.release_date))
+    return 1
+
+def printSalesItemsWithLimitAndControlUnit(data,total,tag,limit = 50):
+    startwith = 0
+    repeat = 1
+    while repeat:
+        repeat = printSalesItems(data,total,tag,limit,startwith)
+        
+        while 1:
+            # user input
+            comm3 = (input("Choose a number you want to see its url or [next] to see next set of items, or [exit] return to view/plot: "))
+            if comm3.strip().lower() == "exit": return
+            elif comm3.strip().lower() == "next": break
+            if startwith <= int(comm3) and int(comm3) < startwith+limit and int(comm3) < len(data):
+                # provide URL
+                comm3 = int(comm3)
+                #asdasdasdasdas?????????????
+                print("this is your url")
+                return
+            else:
+                print("Invalid input, please choose again")
+                continue
+            # validating input
+
+        startwith += limit
+
+def viewURL(data,total,tag):
+    limit = 50
+    # format printing and selecting
+    printSalesItemsWithLimitAndControlUnit(data,total,tag,limit)
+
+
 
         
 def main():
-    #html = InfiniteScroll()
-    data = CachePage("steamspecial.html",60)
-    tag = 'Indie'
-    res,total = Scrap(data,tag)
-    for item in res:
-        print(item.info())
-    #Scrap(html)
+    # start doing logic with user prompt
     while 1:
         # logic, user interactive part
-        comm = input("Please enter [indie, action, adventure, casual] or [quit] to quit: ")
-        if comm.strip() == "quit":
+        comm = input("Please enter [indie, action, adventure, casual] or [exit] to exit program: ")
+        if comm.strip() == "exit":
             #user enter quit command
             return
         else:   
+            # prepare for extraction
+            res,total,tag = {},-1,"lalala"
             # check comm validation / extracting data
             if comm.strip().lower()   == "indie":
                 data = CachePage("indie.html",60)
                 res,total = Scrap(data,"indie")
-
+                tag = "indie"
             elif comm.strip().lower() == "action":
-                pass
+                data = CachePage("action.html",60)
+                res,total = Scrap(data,"action")
+                tag = "action"
             elif comm.strip().lower() == "adventure":
-                pass
+                data = CachePage("adventure.html",60)
+                res,total = Scrap(data,"adventure")
+                tag = "adventure"
             elif comm.strip().lower() == "casual":
-                pass
+                data = CachePage("casual.html",60)
+                res,total = Scrap(data,"casual")
+                tag = "casual"
             else:
                 print("Invalid input.")
                 continue
             while 1:
-                break
                 # view url / plot data
-                comm2 = input("Do you want to [view] sales items or [plot] data: ")
-                if comm2.strip().lower() == "":
+                comm2 = input("Do you want to [view] sales items or [plot] data, or you can [back] to back to last step, or [exit] to exit the program: ")
+                if comm2.strip().lower() == "back": break
+                if comm2.strip().lower() == "exit": return
+                # valid command
+                if comm2.strip().lower() == "plot":
                     pass
-                elif comm2.strip().lower() == "":
-                    pass
+                elif comm2.strip().lower() == "view":
+                    viewURL(res,total,tag)
+                    continue
                 else:
                     continue
 
