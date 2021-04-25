@@ -8,6 +8,9 @@ import os.path
 from os import path
 import plotly
 import plotly.express as px
+import pandas
+import plotly.graph_objects as go
+import webbrowser
 #C:\Program Files (x86)\Google\Chrome\Application\chrome.exe
 GLOBAL_URL = {
   "indie":"https://store.steampowered.com/search/?specials=1&tags=492",
@@ -245,14 +248,15 @@ def printSalesItemsWithLimitAndControlUnit(data,total,tag,limit = 50):
         
         while 1:
             # user input
-            comm3 = (input("Choose a number you want to see its url or [next] to see next set of items, or [exit] return to view/plot: "))
+            comm3 = (input("Choose a [number] you want to see its url or [next] to see next set of items, or [exit] return to view/plot: "))
             if comm3.strip().lower() == "exit": return
             elif comm3.strip().lower() == "next": break
             if startwith <= int(comm3) and int(comm3) < startwith+limit and int(comm3) < len(data):
                 # provide URL
                 comm3 = int(comm3)
-                #asdasdasdasdas?????????????
-                print("this is your url")
+                #print url
+                url = data[comm3].link
+                webbrowser.open(url, new=2)
                 return
             else:
                 print("Invalid input, please choose again")
@@ -267,11 +271,69 @@ def viewURL(data,total,tag):
     printSalesItemsWithLimitAndControlUnit(data,total,tag,limit)
 
 
-def barPlot():
-    pass
+def barPlot(res,total):
+    x_range_show = 70
+    divider = 14
+    div = int(x_range_show / divider)
+    x_ranges = ["{}-{}".format(i,i+div) for i in range(0,x_range_show,div)]
+    # print(x_ranges)
+    # process data
+    tup = []
+    for item in res:
+        if item.discount_price and item.original_price:
+            if item.discount_price.strip("$") == "Free":
+                dis_price = "0"
+            else: dis_price = item.discount_price
+
+            if item.original_price.strip("$") == "Free":
+                org_price = "0"
+            else: org_price = item.original_price
+            
+            tup.append([int(float(dis_price.strip("$"))),
+                        int(float(org_price.strip("$")))]
+                      )
+        continue
+
+    tup1 = sorted(tup)
+    tup2 = sorted(tup,key=lambda s: s[1])
+    # print("tup1\n",tup1)
+    # print("tup2\n",tup2)
+
+    y_fall_in_discount = []
+    y_fall_in_original = []
+    for i in range(0,x_range_show,div):
+        dis_cnt = 0
+        for item in tup1:
+            if item[0] >= i and item[0] < i+div:
+              dis_cnt += 1
+        y_fall_in_discount.append(dis_cnt)
+
+        org_cnt = 0
+        for item in tup2:
+            if item[1] >= i and item[1] < i+div:
+              org_cnt += 1
+        y_fall_in_original.append(org_cnt)
+
+
+    # print(y_fall_in_discount)
+    # print(y_fall_in_original)
+
+    fig = go.Figure(data=[
+        go.Bar(name='Discount Price', x=x_ranges, y=y_fall_in_discount),
+        go.Bar(name='Original Price', x=x_ranges, y=y_fall_in_original)
+    ])
+    # Change the bar mode
+    fig.update_layout(
+      barmode='group',
+      title="Discount price VS Original Price",
+      yaxis=dict(title='USD($)',titlefont_size=15),
+      xaxis=dict(title='Price range',titlefont_size=15)
+
+      )
+    fig.show()
+
 
 def scatterPlot(res,total):
-
     tup = []
     for item in res:
         if item.discount_price and item.discount_rate:
@@ -284,9 +346,8 @@ def scatterPlot(res,total):
         continue
 
     tup.sort()
-
-    x,y = ["$"+str(i[0]) for i in tup], [str(i[1])+"%" for i in tup]
-    fig = px.scatter(x, y)
+    df = pandas.DataFrame(tup, columns=["Discount Price", "Discount Rate"])
+    fig = px.scatter(df,x = "Discount Price", y = "Discount Rate",title = "Scatter plot of discount price and discount rate",range_x = [-10,200])
     fig.show()
 
 
@@ -330,7 +391,7 @@ def main():
                 if comm2.strip().lower() == "plot":
                     comm3 = input("Do you want a [bar] plot or a [scatter] plot? Or you can [back] to back to last step, or [exit] to exit the program:")
                     if comm3.strip().lower() == "bar":
-                        barPlot()
+                        barPlot(res,total)
                     elif comm3.strip().lower() == "scatter":
                         scatterPlot(res,total)
                     elif comm3.strip().lower() == "back": break
