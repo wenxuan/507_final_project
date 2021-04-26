@@ -24,22 +24,25 @@ class SteamDiscountItem:
     Instance Attributes
     -------------------
     title: string
-        the title of steam game (e.g. 'National Park', '')
+        the title of steam game (e.g. '5D Chess With Multiverse Time Travel', ...)
   
     tag: string
-        the tag of steam game
+        the tag of steam game(e.g. "Indie", ...)
     
     positive rate: string
-        the city and state of a national site (e.g. 'Houghton, MI')
+        the positive rate of a special sale game in steam (e.g. '43%', '56%',...)
 
     discount rate: string
-        the zip-code of a national site (e.g. '49931', '82190-0168')
+        the discount rate of a special sale game in steam (e.g. '43%', '56%',...)
 
     original price: string
-        the phone of a national site (e.g. '(616) 319-7906', '307-344-7381')
+        the original price of a special sale game in steam (e.g. $249.77',...)
+
+    discount price: string
+    the discount price of a special sale game in steam (e.g. '$37.82',...)
 
     release date: string
-        the name of a national site (e.g. 'Isle Royale')
+        the realease date of a special sale game in steam (e.g. 'Aug 18, 2020')
     '''
     def __init__(self, title, tag, positive_rate, discount_rate,  original_price, discount_price, release_date, link):
         self.title = title
