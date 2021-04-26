@@ -73,7 +73,10 @@ class SteamDiscountItem:
 
 # start extracting website raw data with cache or feching
 def InfiniteScroll(n=1,tag="indie"):
+    '''
+    Infinite Scrolling setup for scraping
 
+    '''
     driver = webdriver.Chrome(executable_path=r"C:\Users\19738\Downloads\chromedriver_win32\chromedriver.exe")
     driver.get(GLOBAL_URL[tag.lower()])
 
@@ -90,18 +93,29 @@ def InfiniteScroll(n=1,tag="indie"):
     return result
 
 def readCache(fn):
+    '''
+    Read Cache file data through exsiting file
 
+    '''
     with open(fn, 'r', encoding="utf-8") as r:
         data = r.read()
     return data
 
 def writeCache(data,fn):
+    '''
+    Write data into file
+
+    '''
     with open(fn, "w", encoding="utf-8") as f:
         f.write(data)
     f.close()
     return
 
 def CachePage(fn,numScroll):
+    '''
+    Save cache files to local folder
+
+    '''
     path = '/Users/19738/OneDrive/Desktop/SI507/assignment/final project/'+str(fn)
     if os.path.exists(path):
         return readCache(fn)
@@ -130,6 +144,10 @@ def writeItem(fn,data,total):
     return
 
 def readItem(fn):
+    '''
+    Read JSON file
+
+    '''
     path = '/Users/19738/OneDrive/Desktop/SI507/assignment/final project/'+str(fn)
     if os.path.exists(path):
         with open(fn,"r") as f:
@@ -226,6 +244,10 @@ def Scrap(html,tag='indie'):
     return AllsalesItem,i
 
 def printSalesItems(data,total,tag,limit=50,startwith=0):
+    '''
+    Formatting data output
+
+    '''
     # header
     print("--------------------------------------------------------")
     print("#{} has {} number of sales items in the list#".format(str(tag).capitalize(),total))
@@ -244,6 +266,10 @@ def printSalesItems(data,total,tag,limit=50,startwith=0):
     return 1
 
 def printSalesItemsWithLimitAndControlUnit(data,total,tag,limit = 50):
+    '''
+    User sub command line
+
+    '''
     startwith = 0
     repeat = 1
     while repeat:
@@ -269,12 +295,20 @@ def printSalesItemsWithLimitAndControlUnit(data,total,tag,limit = 50):
         startwith += limit
 
 def viewURL(data,total,tag):
+    '''
+    Set list of data to 50 per page
+
+    '''
     limit = 50
     # format printing and selecting
     printSalesItemsWithLimitAndControlUnit(data,total,tag,limit)
 
 
 def barPlot(res,total):
+    '''
+    Creating bar plot using Plotly
+
+    '''
     x_range_show = 70
     divider = 14
     div = int(x_range_show / divider)
@@ -337,6 +371,10 @@ def barPlot(res,total):
 
 
 def scatterPlot(res,total):
+    '''
+    Creating scatter plot using Ploty
+
+    '''
     tup = []
     for item in res:
         if item.discount_price and item.discount_rate:
@@ -355,6 +393,10 @@ def scatterPlot(res,total):
 
 
 def main():
+    '''
+    User Prompt
+
+    '''
     # start doing logic with user prompt
     while 1:
         # logic, user interactive part
