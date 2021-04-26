@@ -3,27 +3,45 @@
 In this project we need lots of packages in our program.
 
 Packages for infinite scrolling:
+
 import time
+
 from selenium import webdriver
+
 from selenium.webdriver.chrome.options import Option
 
+
 Packages for Scraping:
+
 from bs4 import BeautifulSoup 
+
 from urllib.parse import urljoin
 
+
 Packages for save file(caching):
+
 import json
+
 import os.path
+
 from os import path
 
+
 Packages for plot(Plotly):
+
 import plotly
+
 import plotly.express as px
+
 import pandas
+
 import plotly.graph_objects as go
 
+
 Package for open URL directly:
+
 import webbrowser
+
 
 In this program I provide four datasets from four Steam special sales in different tags. 
 The four tags are: Indie, Action, Adventure, and Casual. 
