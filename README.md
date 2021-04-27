@@ -3,7 +3,7 @@
 Author:**Wenxuan Zhang**
 
 
-##Packages needed
+## Packages needed
 
 In this project we need lots of packages in our program.
 
@@ -47,7 +47,7 @@ import plotly.graph_objects as go
 
 import webbrowser
 
-##Instruction
+## Instruction
 
 In this program I provide four datasets from four Steam special sales in different tags. 
 The four tags are: Indie, Action, Adventure, and Casual. 
@@ -60,7 +60,7 @@ If they choose to see the data, they can see the title, tag, positive rate, disc
 
 If they choose to plot the data, they will be given two options. First is Bar plot, the other is Scatter plot. After selecting bar or scatter, user can automatically open a browser to see the plot. Since there are four different datasets and two different plot types, users can give 8 different plots in this program. 
 
-##Video Walkthrough
+## Video Walkthrough
 
 Here's my YouTube video link for instruction and walkthrough of my program. 
 https://youtu.be/DoYi3XD1LIk
