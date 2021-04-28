@@ -280,14 +280,18 @@ def printSalesItemsWithLimitAndControlUnit(data,total,tag,limit = 50):
             comm3 = (input("Choose a [number] you want to see its url or [next] to see next set of items, or [exit] return to view/plot: "))
             if comm3.strip().lower() == "exit": return
             elif comm3.strip().lower() == "next": break
-            if startwith <= int(comm3) and int(comm3) < startwith+limit and int(comm3) < len(data):
-                # provide URL
-                comm3 = int(comm3)
-                #print url
-                url = data[comm3].link
-                webbrowser.open(url, new=2)
-                return
-            else:
+            try:
+                if startwith <= int(comm3) and int(comm3) < startwith+limit and int(comm3) < len(data):
+                    # provide URL
+                    comm3 = int(comm3)
+                    #print url
+                    url = data[comm3].link
+                    webbrowser.open(url, new=2)
+                    return
+                else:
+                    print("Invalid input, please choose again")
+                    continue
+            except:
                 print("Invalid input, please choose again")
                 continue
             # validating input
